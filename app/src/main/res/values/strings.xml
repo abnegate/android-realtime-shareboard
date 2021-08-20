@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">RealBoardTime</string>
+    <string name="menu">Menu</string>
+    <string name="board">Board</string>
+    <string name="join_room">Join Room</string>
+    <string name="create_room">Create Room</string>
+    <string name="create_account">Create Account</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_room_name">Room Name</string>
+    <string name="cd_logoImage">RealBoardTime logo image</string>
+    <string name="oops">Oops!</string>
+    <string name="room_exists">A room with that name is in use. Please use a different name, or try again later.</string>
+    <string name="error_room_create">We messed up creating your room, give it another whirl.</string>
+    <string name="aw_no">Aw no :(</string>
+    <string name="room_name_invalid">Room name must be at least 6 characters long.</string>
+    <string name="room_password_invalid">Room password must be at least 6 characters long.</string>
+    <string name="room_credentials_invalid">That name and password don\'t work together.</string>
+    <string name="ok">Ok</string>
+</resources>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/menuFragment">
+
+    <fragment
+        android:id="@+id/menuFragment"
+        android:name="io.appwrite.realboardtime.menu.MenuFragment"
+        android:label="@string/menu"
+        tools:layout="@layout/menu_fragment">
+
+        <action
+            android:id="@+id/menuToBoardAction"
+            app:destination="@id/boardFragment">
+
+            <argument
+                android:name="roomId"
+                app:argType="string"
+                app:nullable="false" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/boardFragment"
+        android:name="io.appwrite.realboardtime.board.BoardFragment"
+        android:label="@string/board"
+        tools:layout="@layout/board_fragment">
+
+        <argument
+            android:name="roomId"
+            app:argType="string"
+            app:nullable="false" />
+    </fragment>
+</navigation>
