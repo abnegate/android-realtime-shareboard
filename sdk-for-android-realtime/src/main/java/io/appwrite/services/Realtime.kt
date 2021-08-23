@@ -1,10 +1,9 @@
 package io.appwrite.services
 
-import com.google.gson.Gson
-import com.google.gson.JsonParseException
-import com.google.gson.JsonSyntaxException
 import io.appwrite.Client
 import io.appwrite.extensions.forEachAsync
+import io.appwrite.extensions.fromJson
+import io.appwrite.extensions.toJson
 import io.appwrite.models.RealtimeCodes
 import io.appwrite.models.RealtimeError
 import io.appwrite.models.RealtimeMessage
@@ -28,7 +27,7 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
         private const val DEBOUNCE_MILLIS = 1L
 
         private var socket: RealWebSocket? = null
-        private var channelCallbacks = mutableMapOf<String, MutableCollection<(Any) -> Unit>>()
+        private var channelCallbacks = mutableMapOf<String, MutableCollection<(Map<*,*>) -> Unit>>()
         private var errorCallbacks = mutableSetOf<(RealtimeError) -> Unit>()
 
         private var subCallDepth = 0
@@ -71,7 +70,7 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
     fun subscribe(
         vararg channels: String,
         callback: (Any) -> Unit
-    ) : RealtimeSubscription {
+    ): RealtimeSubscription {
         channels.forEach {
             if (!channelCallbacks.containsKey(it)) {
                 channelCallbacks[it] = mutableListOf(callback)
@@ -104,11 +103,6 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
 
     private inner class AppwriteWebSocketListener : WebSocketListener() {
 
-        override fun onOpen(webSocket: WebSocket, response: Response) {
-            super.onOpen(webSocket, response)
-            print("WebSocket connected.")
-        }
-
         override fun onMessage(webSocket: WebSocket, text: String) {
             super.onMessage(webSocket, text)
             print("WebSocket message received: $text")
@@ -125,7 +119,9 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
 
                 message.channels.forEachAsync { channel ->
                     channelCallbacks[channel]?.forEachAsync { callback ->
-                        callback.invoke(message.payload)
+                        callback.invoke(
+                            message.payload.toJson().fromJson(Map::class.java)
+                        )
                     }
                 }
             }
@@ -150,16 +146,11 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
             t.printStackTrace()
         }
 
-        private inline fun <reified T> parse(text: String): T? {
-            return try {
-                Gson().fromJson(text, T::class.java)
-            } catch (ex: JsonSyntaxException) {
-                ex.printStackTrace()
-                null
-            } catch (ex: JsonParseException) {
-                ex.printStackTrace()
-                null
-            }
+        private inline fun <reified T> parse(text: String): T? = try {
+            text.fromJson(T::class.java)
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            null
         }
     }
 }

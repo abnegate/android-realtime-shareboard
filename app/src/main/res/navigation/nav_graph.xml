@@ -19,6 +19,11 @@
                 android:name="roomId"
                 app:argType="string"
                 app:nullable="false" />
+
+            <argument
+                android:name="roomName"
+                app:argType="string"
+                app:nullable="false" />
         </action>
     </fragment>
 
@@ -30,6 +35,11 @@
 
         <argument
             android:name="roomId"
+            app:argType="string"
+            app:nullable="false" />
+
+        <argument
+            android:name="roomName"
             app:argType="string"
             app:nullable="false" />
     </fragment>

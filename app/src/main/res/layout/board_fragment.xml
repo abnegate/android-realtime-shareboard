@@ -2,6 +2,9 @@
 <layout>
 
     <data>
+
+        <import type="io.appwrite.realboardtime.drawing.PenMode" />
+
         <variable
             name="viewModel"
             type="io.appwrite.realboardtime.board.BoardViewModel" />
@@ -12,6 +15,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".board.BoardFragment">
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/drawFragment"
+            android:name="io.appwrite.realboardtime.drawing.DrawingFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:tag="drawing_fragment"
+            tools:layout="@layout/drawing_fragment" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

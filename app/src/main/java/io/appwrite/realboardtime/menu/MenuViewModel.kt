@@ -23,8 +23,8 @@ class MenuViewModel(private val client: Client) : ViewModel() {
     private val _message = MutableLiveData<MenuMessage>()
     val message: LiveData<MenuMessage> = _message
 
-    private val _roomId = MutableLiveData<String>()
-    val roomId: LiveData<String> = _roomId
+    private val _room = MutableLiveData<Room>()
+    val room: LiveData<Room> = _room
 
     private val db by lazy {
         Database(client)
@@ -40,7 +40,7 @@ class MenuViewModel(private val client: Client) : ViewModel() {
                 _message.postValue(MenuMessage.ROOM_INVALID_CREDENTIALS)
                 return@launch
             }
-            _roomId.postValue(room.id)
+            _room.postValue(room!!)
         }
     }
 
@@ -49,7 +49,7 @@ class MenuViewModel(private val client: Client) : ViewModel() {
             if (!validateInputs()) {
                 return@launch
             }
-            val room = tryGetRoom()
+            var room = tryGetRoom()
             if (room != null) {
                 _message.postValue(MenuMessage.ROOM_EXISTS)
                 return@launch
@@ -58,12 +58,12 @@ class MenuViewModel(private val client: Client) : ViewModel() {
                 COLLECTION_ID,
                 """{ "name": "$roomName", "passwordHash": "${hashed(password.value)}" }"""
             )
-            val doc = responseCast<Map<*, *>>(response)
-            if (doc == null) {
+            room = responseCast<Room>(response)
+            if (room == null) {
                 _message.postValue(MenuMessage.ROOM_CREATE_FAILED)
                 return@launch
             }
-            _roomId.postValue(doc["\$id"] as String)
+            _room.postValue(room!!)
         }
     }
 

@@ -16,4 +16,8 @@
     <string name="room_password_invalid">Room password must be at least 6 characters long.</string>
     <string name="room_credentials_invalid">That name and password don\'t work together.</string>
     <string name="ok">Ok</string>
+    <string name="draw">Draw</string>
+    <string name="erase">Erase</string>
+    <string name="pick_color">Pick A Color</string>
+    <string name="cancel">cancel</string>
 </resources>

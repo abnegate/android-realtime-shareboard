@@ -14,6 +14,7 @@ import io.appwrite.realboardtime.ClientViewModelFactory
 import io.appwrite.realboardtime.PROJECT_ID
 import io.appwrite.realboardtime.R
 import io.appwrite.realboardtime.databinding.BoardFragmentBinding
+import io.appwrite.realboardtime.drawing.DrawingView
 import io.appwrite.realboardtime.model.BoardMessage
 
 class BoardFragment : Fragment() {
@@ -45,10 +46,16 @@ class BoardFragment : Fragment() {
 
         val view = binding.root
 
+        val drawingFragment = childFragmentManager.findFragmentByTag("drawing_view")
+        val drawingBoard = view.findViewById<DrawingView>(R.id.viewDraw)
+
+
+
         viewModel.message.observe(viewLifecycleOwner, ::showMessage)
 
         return view
     }
+
 
     private fun showMessage(message: BoardMessage?) {
         val builder = AlertDialog.Builder(requireContext())

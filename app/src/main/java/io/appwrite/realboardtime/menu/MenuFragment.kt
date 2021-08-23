@@ -18,6 +18,7 @@ import io.appwrite.realboardtime.R
 import io.appwrite.realboardtime.databinding.MenuFragmentBinding
 import io.appwrite.realboardtime.model.MenuMessage
 import io.appwrite.realboardtime.model.MenuMessage.*
+import io.appwrite.realboardtime.model.Room
 
 class MenuFragment : Fragment() {
 
@@ -53,15 +54,15 @@ class MenuFragment : Fragment() {
             start()
         }
 
-        viewModel.roomId.observe(viewLifecycleOwner, ::navigateToRoomWithId)
+        viewModel.room.observe(viewLifecycleOwner, ::navigateToRoom)
         viewModel.message.observe(viewLifecycleOwner, ::showMessage)
 
         return view
     }
 
-    private fun navigateToRoomWithId(roomId: String) {
+    private fun navigateToRoom(room: Room) {
         findNavController().navigate(
-            MenuFragmentDirections.menuToBoardAction(roomId)
+            MenuFragmentDirections.menuToBoardAction(room.id, room.name)
         )
     }
 
