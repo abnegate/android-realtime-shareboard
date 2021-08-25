@@ -10,9 +10,8 @@ import io.appwrite.realboardtime.R
 
 class DrawingFragment : Fragment() {
 
-    private val viewModel by viewModels<DrawingViewModel>(
-        ownerProducer = { requireParentFragment() }
-    )
+    private val viewModel by viewModels<DrawingViewModel>()
+    private var onNewPathSegment: ((DrawPath) -> Unit)? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -21,10 +20,13 @@ class DrawingFragment : Fragment() {
         val view = inflater.inflate(R.layout.drawing_fragment, container, false)
         val drawingBoard = view.findViewById<DrawingView>(R.id.viewDraw)
 
+        viewModel.segments.observe(viewLifecycleOwner) {
+            onNewPathSegment?.invoke(it)
+        }
         viewModel.penMode.observe(viewLifecycleOwner) {
             when (it) {
-                PenMode.DRAW -> drawingBoard.enableEraser(false)
-                PenMode.ERASE -> drawingBoard.enableEraser(true)
+                PenMode.DRAW -> drawingBoard.setEraserEnabled(false)
+                PenMode.ERASE -> drawingBoard.setEraserEnabled(true)
                 null -> return@observe
             }
         }
@@ -42,5 +44,13 @@ class DrawingFragment : Fragment() {
         }
 
         return view
+    }
+
+    fun setOnNewPathSegmentListener(onNewPathSegment: (DrawPath) -> Unit) {
+        this.onNewPathSegment = onNewPathSegment
+    }
+
+    fun consumeNewPathSegment(segment: DrawPath?) {
+        TODO("Not yet implemented")
     }
 }

@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import io.appwrite.Client
 import io.appwrite.extensions.fromJson
 import io.appwrite.extensions.toJson
-import io.appwrite.realboardtime.COLLECTION_ID
+import io.appwrite.realboardtime.ROOM_COLLECTION_ID
 import io.appwrite.realboardtime.model.MenuMessage
 import io.appwrite.realboardtime.model.Room
 import io.appwrite.services.Database
@@ -55,7 +55,7 @@ class MenuViewModel(private val client: Client) : ViewModel() {
                 return@launch
             }
             val response = db.createDocument(
-                COLLECTION_ID,
+                ROOM_COLLECTION_ID,
                 """{ "name": "$roomName", "passwordHash": "${hashed(password.value)}" }"""
             )
             room = responseCast<Room>(response)
@@ -90,7 +90,7 @@ class MenuViewModel(private val client: Client) : ViewModel() {
     private suspend fun tryGetRoom(): Room? {
         val response = try {
             db.listDocuments(
-                COLLECTION_ID,
+                ROOM_COLLECTION_ID,
                 filters = listOf("""name="${roomName.value}""""),
                 limit = 1
             )

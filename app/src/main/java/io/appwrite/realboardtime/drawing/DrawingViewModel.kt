@@ -14,11 +14,16 @@ class DrawingViewModel : ViewModel() {
     val strokeStyle = MutableLiveData<Paint.Style>()
     val strokeJoin = MutableLiveData<Paint.Join>()
     val strokeCap = MutableLiveData<Paint.Cap>()
+    val segments = MutableLiveData<DrawPath>()
 
     private val _message = MutableLiveData<BoardMessage>()
     val message: LiveData<BoardMessage> = _message
 
-    fun setBoardMode(mode: PenMode) {
+    fun consumeNewPathSegment(segment: DrawPath) {
+        segments.postValue(segment)
+    }
+
+    fun setPenMode(mode: PenMode) {
         penMode.postValue(mode)
     }
 

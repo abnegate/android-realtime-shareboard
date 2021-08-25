@@ -3,11 +3,9 @@ package io.appwrite.realboardtime.drawing
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import io.appwrite.Client
-import io.appwrite.services.Realtime
+
 
 class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
@@ -20,6 +18,7 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
     private var canvasBitmap: Bitmap? = null
 
     private var erase = false
+    private var pathUpdateListener: ((DrawPath) -> Unit)? = null
 
     private var _strokeWidth = 5f
     var strokeWidth: Float
@@ -35,6 +34,7 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
         set(value) {
             _paintColor = value
             drawPaint?.color = paintColor
+            canvasPaint?.color = paintColor
         }
 
     private var _strokeJoin = Paint.Join.ROUND
@@ -61,20 +61,11 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
             drawPaint?.style = style
         }
 
+    private var pathStartX: Float = 0f
+    private var pathStartY: Float = 0f
+
     init {
         setupDrawing()
-
-        val client = Client()
-            .setEndpoint("https://[HOSTNAME_OR_IP]/v1")
-            .setProject("5df5acd0d48c2")
-
-        val realtime = Realtime(client)
-
-        val subscription = realtime.subscribe("account", callback = { param ->
-            print(param.toString())
-        })
-
-        subscription.close()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -89,19 +80,19 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        canvasPaint?.color = paintColor
         val touchX: Float = event.x
         val touchY: Float = event.y
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> drawPath?.moveTo(touchX, touchY)
+            MotionEvent.ACTION_DOWN -> {
+                pathStartX = touchX
+                pathStartY = touchY
+                drawPath?.moveTo(touchX, touchY)
+            }
             MotionEvent.ACTION_MOVE -> {
-                drawCanvas?.drawPath(drawPath!!, drawPaint!!)
-                drawPath?.lineTo(touchX, touchY)
+                drawLine(pathStartX, pathStartY, touchX, touchY)
             }
             MotionEvent.ACTION_UP -> {
-                drawPath?.lineTo(touchX, touchY)
-                drawCanvas?.drawPath(drawPath!!, drawPaint!!)
-                drawPath?.reset()
+                drawLine(pathStartX, pathStartY, touchX, touchY)
             }
             else -> return false
         }
@@ -109,7 +100,29 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
         return true
     }
 
-    fun enableEraser(enabled: Boolean) {
+    private fun drawLine(x0: Float, y0: Float, x1: Float, y1: Float) {
+        drawPath?.moveTo(x0, y0)
+        drawPath?.lineTo(x1, y1)
+        drawPath?.close()
+
+        drawCanvas?.drawPath(drawPath!!, drawPaint!!)
+
+        pathUpdateListener?.invoke(
+            DrawPath(
+                x0 / width,
+                y0 / height,
+                x1 / width,
+                y1 / height,
+                paintColor
+            )
+        )
+    }
+
+    fun setOnNewPathSegment(onPathUpdate: (DrawPath) -> Unit) {
+        pathUpdateListener = onPathUpdate
+    }
+
+    fun setEraserEnabled(enabled: Boolean) {
         erase = enabled
         drawPaint = Paint()
         if (erase) {
