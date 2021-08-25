@@ -1,4 +1,4 @@
-package io.appwrite.realboardtime.board
+package io.appwrite.realboardtime.room
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,21 +8,20 @@ import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import io.appwrite.Client
-import io.appwrite.realboardtime.ClientViewModelFactory
-import io.appwrite.realboardtime.PROJECT_ID
 import io.appwrite.realboardtime.R
-import io.appwrite.realboardtime.databinding.BoardFragmentBinding
+import io.appwrite.realboardtime.core.ClientViewModelFactory
+import io.appwrite.realboardtime.core.PROJECT_ID
+import io.appwrite.realboardtime.databinding.FragmentRoomBinding
 import io.appwrite.realboardtime.drawing.DrawingFragment
-import io.appwrite.realboardtime.drawing.DrawingView
-import io.appwrite.realboardtime.model.BoardMessage
 
-class BoardFragment : Fragment() {
+class RoomFragment : Fragment() {
 
-    private val args by navArgs<BoardFragmentArgs>()
+    private val args by navArgs<RoomFragmentArgs>()
 
-    private val viewModel by viewModels<BoardViewModel> {
+    private val viewModel by viewModels<RoomViewModel> {
         ClientViewModelFactory(
             Client(requireContext())
                 .setEndpoint("https://realtime.appwrite.org/v1")
@@ -35,9 +34,9 @@ class BoardFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding: BoardFragmentBinding = DataBindingUtil.inflate(
+        val binding: FragmentRoomBinding = DataBindingUtil.inflate(
             inflater,
-            R.layout.board_fragment,
+            R.layout.fragment_room,
             container,
             false
         )
@@ -47,24 +46,25 @@ class BoardFragment : Fragment() {
 
         val view = binding.root
 
-        val drawingFragment = childFragmentManager.findFragmentById(R.id.drawFragment) as DrawingFragment
-        val drawingBoard = view.findViewById<DrawingView>(R.id.viewDraw)
-
-        drawingFragment.setOnNewPathSegmentListener {
-            viewModel.submitNewPathSegment(it)
+        val fragment = DrawingFragment.newInstance(onProducePathSegment = {
+            viewModel.createPathDocument(it)
+        }).apply {
+            // Consume remote paths
+            viewModel.incomingSegments.observe(this@RoomFragment.viewLifecycleOwner) {
+                consumePathSegment(it)
+            }
         }
 
-        viewModel.incomingSegments.observe(viewLifecycleOwner) {
-            drawingFragment.consumeNewPathSegment(it)
-        }
+        childFragmentManager.beginTransaction()
+            .add(R.id.fragmentContainer, fragment)
+            .commit()
 
         viewModel.message.observe(viewLifecycleOwner, ::showMessage)
 
         return view
     }
 
-
-    private fun showMessage(message: BoardMessage?) {
+    private fun showMessage(message: RoomMessage?) {
         val builder = AlertDialog.Builder(requireContext())
         when (message!!) {
 

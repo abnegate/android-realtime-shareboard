@@ -5,20 +5,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import android.widget.ProgressBar
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.Group
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.snackbar.Snackbar
 import io.appwrite.Client
-import io.appwrite.realboardtime.ClientViewModelFactory
-import io.appwrite.realboardtime.PROJECT_ID
 import io.appwrite.realboardtime.R
-import io.appwrite.realboardtime.databinding.MenuFragmentBinding
-import io.appwrite.realboardtime.model.MenuMessage
-import io.appwrite.realboardtime.model.MenuMessage.*
-import io.appwrite.realboardtime.model.Room
+import io.appwrite.realboardtime.core.ClientViewModelFactory
+import io.appwrite.realboardtime.core.PROJECT_ID
+import io.appwrite.realboardtime.core.hideSoftKeyBoard
+import io.appwrite.realboardtime.databinding.FragmentMenuBinding
+import io.appwrite.realboardtime.menu.MenuMessage.*
+import io.appwrite.realboardtime.room.Room
 
 class MenuFragment : Fragment() {
 
@@ -34,9 +36,9 @@ class MenuFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding: MenuFragmentBinding = DataBindingUtil.inflate(
+        val binding: FragmentMenuBinding = DataBindingUtil.inflate(
             inflater,
-            R.layout.menu_fragment,
+            R.layout.fragment_menu,
             container,
             false
         )
@@ -47,6 +49,8 @@ class MenuFragment : Fragment() {
         val view = binding.root
         val constraintLayout = view.findViewById<ConstraintLayout>(R.id.layout)
         val animationDrawable = constraintLayout.background as AnimationDrawable
+        val inputs = view.findViewById<Group>(R.id.inputs)
+        val pg = view.findViewById<ProgressBar>(R.id.progress)
 
         with(animationDrawable) {
             setEnterFadeDuration(2000)
@@ -54,6 +58,19 @@ class MenuFragment : Fragment() {
             start()
         }
 
+        viewModel.isBusy.observe(viewLifecycleOwner) {
+            when (it) {
+                true -> {
+                    requireActivity().hideSoftKeyBoard()
+                    pg.visibility = View.VISIBLE
+                    inputs.visibility = View.INVISIBLE
+                }
+                false -> {
+                    pg.visibility = View.INVISIBLE
+                    inputs.visibility = View.VISIBLE
+                }
+            }
+        }
         viewModel.room.observe(viewLifecycleOwner, ::navigateToRoom)
         viewModel.message.observe(viewLifecycleOwner, ::showMessage)
 
@@ -67,32 +84,26 @@ class MenuFragment : Fragment() {
     }
 
     private fun showMessage(message: MenuMessage?) {
-        val builder = AlertDialog.Builder(requireContext())
         when (message!!) {
             ROOM_EXISTS -> {
-                builder.setTitle(R.string.oops)
-                    .setMessage(R.string.room_exists)
+                Snackbar.make(requireView(), R.string.room_exists, Snackbar.LENGTH_LONG)
             }
             ROOM_CREATE_FAILED -> {
-                builder.setTitle(R.string.aw_no)
-                    .setMessage(R.string.error_room_create)
+                Snackbar.make(requireView(), R.string.error_room_create, Snackbar.LENGTH_LONG)
             }
             ROOM_NAME_INVALID -> {
-                builder.setTitle(R.string.oops)
-                    .setMessage(R.string.room_name_invalid)
+                Snackbar.make(requireView(), R.string.room_name_invalid, Snackbar.LENGTH_LONG)
             }
             ROOM_PASSWORD_INVALID -> {
-                builder.setTitle(R.string.oops)
-                    .setMessage(R.string.room_password_invalid)
+                Snackbar.make(requireView(), R.string.room_password_invalid, Snackbar.LENGTH_LONG)
             }
             ROOM_INVALID_CREDENTIALS -> {
-                builder.setTitle(R.string.oops)
-                    .setMessage(R.string.room_credentials_invalid)
+                Snackbar.make(
+                    requireView(),
+                    R.string.room_credentials_invalid,
+                    Snackbar.LENGTH_LONG
+                )
             }
-        }
-        builder.setNeutralButton(R.string.ok) { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.create().show()
+        }.show()
     }
 }

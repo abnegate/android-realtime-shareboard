@@ -1,115 +1,132 @@
 package io.appwrite.realboardtime.menu
 
+import android.util.Base64
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.appwrite.Client
-import io.appwrite.extensions.fromJson
 import io.appwrite.extensions.toJson
-import io.appwrite.realboardtime.ROOM_COLLECTION_ID
-import io.appwrite.realboardtime.model.MenuMessage
-import io.appwrite.realboardtime.model.Room
+import io.appwrite.realboardtime.core.*
+import io.appwrite.realboardtime.model.Filter
+import io.appwrite.realboardtime.room.Room
+import io.appwrite.realboardtime.room.RoomDto
+import io.appwrite.services.Account
 import io.appwrite.services.Database
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import okhttp3.Response
 
-class MenuViewModel(private val client: Client) : ViewModel() {
+class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
 
     val roomName = MutableStateFlow("")
     val password = MutableStateFlow("")
 
-    private val _message = MutableLiveData<MenuMessage>()
-    val message: LiveData<MenuMessage> = _message
-
     private val _room = MutableLiveData<Room>()
     val room: LiveData<Room> = _room
 
-    private val db by lazy {
-        Database(client)
+    private val db by lazy { Database(client) }
+
+    private val account by lazy { Account(client) }
+
+    init {
+        viewModelScope.launch {
+            account.createSession("jake@appwrite.io", "password")
+        }
     }
 
     fun joinRoom() {
         viewModelScope.launch {
+            setBusy(true)
             if (!validateInputs()) {
+                setBusy(false)
                 return@launch
             }
             val room = tryGetRoom()
-            if (room == null || room.passwordHash != hashed(password.value)) {
-                _message.postValue(MenuMessage.ROOM_INVALID_CREDENTIALS)
+            if (room == null) {
+                message.postValue(MenuMessage.ROOM_INVALID_CREDENTIALS)
+                setBusy(false)
+                return@launch
+            }
+            val decodedSalt = Base64.decode(room.passwordSalt, Base64.DEFAULT)
+            val decodedLocalHash = password.value.generateKeys(decodedSalt).passwordHash
+            if (decodedLocalHash != room.passwordHash) {
+                message.postValue(MenuMessage.ROOM_INVALID_CREDENTIALS)
+                setBusy(false)
                 return@launch
             }
             _room.postValue(room!!)
+            setBusy(false)
         }
     }
 
     fun createRoom() {
         viewModelScope.launch {
+            setBusy(true)
             if (!validateInputs()) {
+                setBusy(false)
                 return@launch
             }
             var room = tryGetRoom()
             if (room != null) {
-                _message.postValue(MenuMessage.ROOM_EXISTS)
+                message.postValue(MenuMessage.ROOM_EXISTS)
+                setBusy(false)
                 return@launch
             }
+            val pwHash = password.value.generateKeys()
+            val roomDto = RoomDto(
+                roomName.value,
+                pwHash.passwordHash,
+                pwHash.passwordSalt
+            )
             val response = db.createDocument(
                 ROOM_COLLECTION_ID,
-                """{ "name": "$roomName", "passwordHash": "${hashed(password.value)}" }"""
+                roomDto.toJson(),
+                listOf("*"),
+                listOf("*")
             )
-            room = responseCast<Room>(response)
+            room = response.body?.string()?.fromJson<Room>()
             if (room == null) {
-                _message.postValue(MenuMessage.ROOM_CREATE_FAILED)
+                message.postValue(MenuMessage.ROOM_CREATE_FAILED)
+                setBusy(false)
                 return@launch
             }
             _room.postValue(room!!)
+            setBusy(false)
         }
     }
 
     private fun validateInputs(): Boolean {
         if (!isValidRoomName()) {
-            _message.postValue(MenuMessage.ROOM_NAME_INVALID)
+            message.postValue(MenuMessage.ROOM_NAME_INVALID)
             return false
         }
         if (!isValidPassword()) {
-            _message.postValue(MenuMessage.ROOM_PASSWORD_INVALID)
+            message.postValue(MenuMessage.ROOM_PASSWORD_INVALID)
             return false
         }
         return true
     }
 
     private fun isValidRoomName(): Boolean {
-        return roomName.value.length > 6
+        return roomName.value.length >= 6
     }
 
     private fun isValidPassword(): Boolean {
-        return password.value.length > 6
+        return password.value.length >= 6
     }
 
     private suspend fun tryGetRoom(): Room? {
-        val response = try {
-            db.listDocuments(
-                ROOM_COLLECTION_ID,
-                filters = listOf("""name="${roomName.value}""""),
-                limit = 1
-            )
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-            return null
-        }
-        return responseCast<List<Room>>(response)?.firstOrNull()
-    }
+        val response = db.listDocuments(
+            ROOM_COLLECTION_ID,
+            filters = listOf("name=${roomName.value}"),
+            limit = 1
+        )
 
-    private fun hashed(password: String): String {
-        // TODO: Hash the password
-        return password.hashCode().toString()
-    }
+        val bodyString = response.body?.string()
 
-    private inline fun <reified T> responseCast(response: Response): T? {
-        @Suppress("BlockingMethodInNonBlockingContext")
-        return response.body?.string()
-            ?.toJson()
-            ?.fromJson(T::class.java)
+        return bodyString
+            ?.fromJson<Filter>()
+            ?.documents
+            ?.firstOrNull()
+            ?.cast()
     }
 }

@@ -9,7 +9,7 @@
         android:id="@+id/menuFragment"
         android:name="io.appwrite.realboardtime.menu.MenuFragment"
         android:label="@string/menu"
-        tools:layout="@layout/menu_fragment">
+        tools:layout="@layout/fragment_menu">
 
         <action
             android:id="@+id/menuToBoardAction"
@@ -29,9 +29,9 @@
 
     <fragment
         android:id="@+id/boardFragment"
-        android:name="io.appwrite.realboardtime.board.BoardFragment"
+        android:name="io.appwrite.realboardtime.room.RoomFragment"
         android:label="@string/board"
-        tools:layout="@layout/board_fragment">
+        tools:layout="@layout/fragment_room">
 
         <argument
             android:name="roomId"

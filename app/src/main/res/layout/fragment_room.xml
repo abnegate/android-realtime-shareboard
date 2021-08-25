@@ -7,22 +7,20 @@
 
         <variable
             name="viewModel"
-            type="io.appwrite.realboardtime.board.BoardViewModel" />
+            type="io.appwrite.realboardtime.room.RoomViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".board.BoardFragment">
+        tools:context=".room.RoomFragment">
 
         <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/drawFragment"
-            android:name="io.appwrite.realboardtime.drawing.DrawingFragment"
+            android:id="@+id/fragmentContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:tag="drawing_fragment"
-            tools:layout="@layout/drawing_fragment" />
+            tools:layout="@layout/fragment_drawing" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

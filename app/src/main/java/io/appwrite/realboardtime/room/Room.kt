@@ -1,4 +1,4 @@
-package io.appwrite.realboardtime.model
+package io.appwrite.realboardtime.room
 
 import com.google.gson.annotations.SerializedName
 
@@ -7,5 +7,5 @@ data class Room(
     val id: String,
     val name: String,
     val passwordHash: String,
-    val participantCount: Int
+    val passwordSalt: String
 )

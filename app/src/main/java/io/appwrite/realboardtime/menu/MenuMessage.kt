@@ -1,4 +1,4 @@
-package io.appwrite.realboardtime.model
+package io.appwrite.realboardtime.menu
 
 enum class MenuMessage {
     ROOM_EXISTS,
@@ -8,6 +8,3 @@ enum class MenuMessage {
     ROOM_INVALID_CREDENTIALS
 }
 
-enum class BoardMessage {
-
-}

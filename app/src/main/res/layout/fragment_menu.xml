@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
+
         <variable
             name="viewModel"
             type="io.appwrite.realboardtime.menu.MenuViewModel" />
@@ -12,15 +13,15 @@
         android:id="@+id/layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
         android:background="@drawable/gradient_list"
         tools:context=".menu.MenuFragment">
 
         <ImageView
             android:id="@+id/logoImage"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
+            android:layout_width="130dp"
+            android:layout_height="130dp"
             android:layout_marginTop="64dp"
-            android:layout_marginBottom="8dp"
             android:contentDescription="@string/cd_logoImage"
             android:src="@mipmap/ic_launcher"
             app:layout_constraintBottom_toTopOf="@id/roomNameField"
@@ -28,11 +29,31 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:hideAnimationBehavior="outward"
+            app:layout_constraintBottom_toTopOf="@id/joinRoomButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/logoImage"
+            app:showAnimationBehavior="inward"
+            app:trackCornerRadius="3dp" />
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/inputs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="roomNameField, roomPasswordField, joinRoomButton, createRoomButton" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/roomNameField"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp"
+            android:layout_marginTop="32dp"
             android:hint="@string/hint_room_name"
             app:layout_constraintBottom_toTopOf="@id/roomPasswordField"
             app:layout_constraintEnd_toEndOf="parent"
@@ -51,13 +72,15 @@
             android:id="@+id/roomPasswordField"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginVertical="8dp"
+            android:layout_marginTop="8dp"
             android:hint="@string/hint_password"
             app:layout_constraintBottom_toTopOf="@id/joinRoomButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/roomNameField"
-            app:layout_constraintWidth_percent="0.9">
+            app:layout_constraintWidth_percent="0.9"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="?attr/colorPrimary">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -70,18 +93,18 @@
             android:id="@+id/joinRoomButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:onClick="@{() -> viewModel.joinRoom()}"
             android:text="@string/join_room"
             app:layout_constraintBottom_toTopOf="@id/createRoomButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/roomPasswordField"
             app:layout_constraintWidth_percent="0.75" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/createRoomButton"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:onClick="@{() -> viewModel.createRoom()}"
