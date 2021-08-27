@@ -5,20 +5,23 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import androidx.databinding.BindingAdapter
+import io.appwrite.realboardtime.model.PaintedPath
+import io.appwrite.realboardtime.model.SyncPath
 
 class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
-    var drawPath: Path? = null
-
     private var drawPaint: Paint? = null
+    private var drawPaintRemote: Paint? = null
+
+    private val drawPaths = mutableListOf<PaintedPath>()
+
     private var canvasPaint: Paint? = null
 
     private var drawCanvas: Canvas? = null
     private var canvasBitmap: Bitmap? = null
 
     private var erase = false
-    private var produceListener: OnPathSegmentListener? = null
+    private var produceListener: ((SyncPath) -> Unit)? = null
 
     private var _strokeWidth = 10f
     var strokeWidth: Float
@@ -29,7 +32,7 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
             drawPaint?.strokeWidth = realValue
         }
 
-    private var _paintColor = -0x10000
+    private var _paintColor = -0xFFFFFF
     var paintColor: Int
         get() = _paintColor
         set(value) {
@@ -53,54 +56,59 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
 
     override fun onDraw(canvas: Canvas) {
         canvas.drawBitmap(canvasBitmap!!, 0f, 0f, canvasPaint)
-        canvas.drawPath(drawPath!!, drawPaint!!)
+
+        drawPaths.forEach {
+            canvas.drawPath(it.path, it.paint)
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val touchX: Float = event.x
-        val touchY: Float = event.y
+        val touchX = event.x
+        val touchY = event.y
+        val path = SyncPath(pathStartX, pathStartY, touchX, touchY, paintColor, strokeWidth)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 pathStartX = touchX
                 pathStartY = touchY
             }
             MotionEvent.ACTION_MOVE -> {
-                drawLine(pathStartX, pathStartY, touchX, touchY, paintColor, emit = true)
+                drawLine(path, emit = true)
                 pathStartX = touchX
                 pathStartY = touchY
             }
             MotionEvent.ACTION_UP -> {
-                drawLine(pathStartX, pathStartY, touchX, touchY, paintColor)
+                drawLine(path)
             }
             else -> return false
         }
         return true
     }
 
-    fun drawLine(x0: Float, y0: Float, x1: Float, y1: Float, color: Int, emit: Boolean = false) {
-        drawPath?.moveTo(x0, y0)
-        drawPath?.lineTo(x1, y1)
-        drawPath?.close()
-        paintColor = color
-        drawCanvas?.drawPath(drawPath!!, drawPaint!!)
+    fun drawLine(path: SyncPath, emit: Boolean = false) {
+        drawPaths.add(
+            PaintedPath(
+                Path().apply {
+                    moveTo(path.x0, path.y0)
+                    lineTo(path.x1, path.y1)
+                    close()
+                },
+                Paint(drawPaint!!.apply {
+                    this.color = color
+                    this.strokeWidth = strokeWidth
+                })
+            )
+        )
 
         invalidate()
 
         if (!emit) {
             return
         }
-        produceListener?.onNewPath(
-            DrawPath(
-                x0 / width,
-                y0 / height,
-                x1 / width,
-                y1 / height,
-                paintColor
-            )
-        )
+
+        produceListener?.invoke(path)
     }
 
-    fun setOnProducePathSegmentListener(listener: OnPathSegmentListener) {
+    fun setOnProducePathSegmentListener(listener: (SyncPath) -> Unit) {
         this.produceListener = listener
     }
 
@@ -124,7 +132,6 @@ class DrawingView(context: Context?, attrs: AttributeSet?) : View(context, attrs
     }
 
     private fun setupDrawing() {
-        drawPath = Path()
         drawPaint = Paint().apply {
             color = paintColor
             isAntiAlias = true

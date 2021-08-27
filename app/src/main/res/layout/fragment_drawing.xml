@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
-        <import type="io.appwrite.realboardtime.drawing.PenMode" />
-
-        <import type="io.appwrite.realboardtime.drawing.DrawPath" />
+        <import type="io.appwrite.realboardtime.drawing.DrawingMessage" />
+        <import type="io.appwrite.realboardtime.model.SyncPath" />
 
         <variable
             name="viewModel"
             type="io.appwrite.realboardtime.drawing.DrawingViewModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".room.RoomFragment">
@@ -25,45 +24,21 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <SeekBar
-            android:id="@+id/thickness"
-            android:layout_width="fill_parent"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/colorFab"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:progress="@={viewModel.strokeWidth}"
-            app:layout_constraintBottom_toTopOf="@id/draw"
+            android:layout_margin="8dp"
+            android:contentDescription="@string/app_name"
+            android:onClick="@{() -> viewModel.postMessage(DrawingMessage.CHANGE_COLOR)}"
+            android:text="@string/erase"
+            app:fabSize="mini"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
-            android:id="@+id/draw"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="@{() -> viewModel.setPenMode(PenMode.DRAW)}"
-            android:text="@string/draw"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/erase"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <Button
-            android:id="@+id/erase"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="@{() -> viewModel.setPenMode(PenMode.ERASE)}"
-            android:text="@string/erase"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/draw" />
-
-        <Button
-            android:id="@+id/color"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/erase"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/draw" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

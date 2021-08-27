@@ -1,9 +1,10 @@
 package io.appwrite.realboardtime.drawing
 
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import io.appwrite.realboardtime.core.BaseViewModel
+import io.appwrite.realboardtime.model.PenMode
 
-class DrawingViewModel : ViewModel() {
+class DrawingViewModel : BaseViewModel<DrawingMessage>() {
 
     val penMode = MutableLiveData<PenMode>()
     val paintColor = MutableLiveData<Int>()
@@ -19,5 +20,9 @@ class DrawingViewModel : ViewModel() {
 
     fun setStrokeWidth(value: Int) {
         strokeWidth.postValue(value)
+    }
+
+    fun postMessage(message: DrawingMessage) {
+        this.message.postValue(message)
     }
 }

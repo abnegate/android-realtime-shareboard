@@ -1,20 +1,28 @@
 package io.appwrite.realboardtime.drawing
 
+import android.content.res.ColorStateList
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.appwrite.realboardtime.R
+import io.appwrite.realboardtime.colorpicker.ColorPickerDialog
+import io.appwrite.realboardtime.colorpicker.ColorSwatch
+import io.appwrite.realboardtime.databinding.FragmentDrawingBinding
+import io.appwrite.realboardtime.model.SyncPath
 import java.io.Serializable
 
 class DrawingFragment : Fragment() {
 
     companion object {
         fun newInstance(
-            onProducePathSegment: (DrawPath) -> Unit
+            onProducePathSegment: (SyncPath) -> Unit
         ): DrawingFragment {
             val args = bundleOf(
                 "onProducePathSegment" to onProducePathSegment as Serializable
@@ -27,44 +35,59 @@ class DrawingFragment : Fragment() {
 
     private val viewModel by viewModels<DrawingViewModel>()
     private var drawingBoard: DrawingView? = null
+    private var colorButton: FloatingActionButton? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val args = requireArguments()
-        val onProduce = args.getSerializable("onProducePathSegment") as (DrawPath) -> Unit
-        val view = inflater.inflate(R.layout.fragment_drawing, container, false)
+        val onProduce = args.getSerializable("onProducePathSegment") as (SyncPath) -> Unit
+        val binding = DataBindingUtil.inflate<FragmentDrawingBinding>(
+            LayoutInflater.from(requireContext()),
+            R.layout.fragment_drawing,
+            container,
+            false
+        )
 
+        binding.lifecycleOwner = viewLifecycleOwner
+        binding.viewModel = viewModel
+
+        val view = binding.root
+
+        colorButton = view.findViewById(R.id.colorFab)
         drawingBoard = view.findViewById(R.id.viewDraw)
         drawingBoard?.setOnProducePathSegmentListener {
             onProduce.invoke(it)
         }
 
-        viewModel.penMode.observe(viewLifecycleOwner) {
-            when (it) {
-                PenMode.DRAW -> drawingBoard?.setEraserEnabled(false)
-                PenMode.ERASE -> drawingBoard?.setEraserEnabled(true)
-                null -> return@observe
-            }
-        }
         viewModel.paintColor.observe(viewLifecycleOwner) {
-            drawingBoard?.paintColor = it
+            Log.e("SET_COLOR", it.toString())
+            drawingBoard!!.paintColor = it
+            colorButton!!.backgroundTintList = ColorStateList.valueOf(it)
         }
-        viewModel.strokeWidth.observe(viewLifecycleOwner) {
-            drawingBoard?.strokeWidth = it.toFloat()
-        }
+
+        viewModel.message.observe(viewLifecycleOwner, ::showMessage)
 
         return view
     }
 
-    fun consumePathSegment(path: DrawPath) {
-        drawingBoard?.drawLine(
-            path.x0 * drawingBoard!!.width,
-            path.y0 * drawingBoard!!.height,
-            path.x1 * drawingBoard!!.width,
-            path.y1 * drawingBoard!!.height,
-            path.color
-        )
+    fun consumePathSegment(path: SyncPath) {
+        drawingBoard?.drawLine(path)
+    }
+
+    private fun showMessage(message: DrawingMessage?) {
+        when (message!!) {
+            DrawingMessage.CHANGE_COLOR -> {
+                ColorPickerDialog.Builder(requireActivity())
+                    .setTitle(R.string.pick_color)
+                    .setColorSwatch(ColorSwatch.ALL)
+                    .setColorListener { color, _ ->
+                        viewModel.setPaintColor(color)
+                    }
+                    .build()
+                    .show()
+            }
+        }
     }
 }
