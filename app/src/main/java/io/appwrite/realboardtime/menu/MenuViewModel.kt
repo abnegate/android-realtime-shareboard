@@ -14,6 +14,7 @@ import io.appwrite.services.Account
 import io.appwrite.services.Database
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.lang.System.currentTimeMillis
 
 class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
 

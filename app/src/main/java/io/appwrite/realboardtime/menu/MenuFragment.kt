@@ -36,7 +36,7 @@ class MenuFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding: FragmentMenuBinding = DataBindingUtil.inflate(
+        val binding = DataBindingUtil.inflate<FragmentMenuBinding>(
             inflater,
             R.layout.fragment_menu,
             container,
@@ -58,23 +58,25 @@ class MenuFragment : Fragment() {
             start()
         }
 
-        viewModel.isBusy.observe(viewLifecycleOwner) {
-            when (it) {
-                true -> {
-                    requireActivity().hideSoftKeyBoard()
-                    pg.visibility = View.VISIBLE
-                    inputs.visibility = View.INVISIBLE
-                }
-                false -> {
-                    pg.visibility = View.INVISIBLE
-                    inputs.visibility = View.VISIBLE
-                }
-            }
-        }
+        viewModel.isBusy.observe(viewLifecycleOwner) { showBusy(it, pg, inputs) }
         viewModel.room.observe(viewLifecycleOwner, ::navigateToRoom)
         viewModel.message.observe(viewLifecycleOwner, ::showMessage)
 
         return view
+    }
+
+    private fun showBusy(enabled: Boolean, progress: View, inputs: Group) {
+        when (enabled) {
+            true -> {
+                requireActivity().hideSoftKeyBoard()
+                progress.visibility = View.VISIBLE
+                inputs.visibility = View.INVISIBLE
+            }
+            false -> {
+                progress.visibility = View.INVISIBLE
+                inputs.visibility = View.VISIBLE
+            }
+        }
     }
 
     private fun navigateToRoom(room: Room) {

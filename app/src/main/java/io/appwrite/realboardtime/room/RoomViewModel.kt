@@ -8,10 +8,10 @@ import io.appwrite.extensions.toJson
 import io.appwrite.realboardtime.core.BaseViewModel
 import io.appwrite.realboardtime.core.PATH_COLLECTION_ID
 import io.appwrite.realboardtime.core.cast
-import io.appwrite.realboardtime.drawing.DrawPath
+import io.appwrite.realboardtime.model.RoomSyncPath
+import io.appwrite.realboardtime.model.SyncPath
 import io.appwrite.services.Database
 import io.appwrite.services.Realtime
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.System.currentTimeMillis
 
@@ -20,22 +20,22 @@ class RoomViewModel(
     private val roomId: String
 ) : BaseViewModel<RoomMessage>() {
 
-    private val _incomingSegments = MutableLiveData<DrawPath>()
-    val incomingSegments: LiveData<DrawPath> = _incomingSegments
+    private val _incomingSegments = MutableLiveData<SyncPath>()
+    val incomingSegments: LiveData<SyncPath> = _incomingSegments
 
     private val db by lazy { Database(client) }
 
     private val realtime by lazy { Realtime(client) }
 
     private companion object {
-        const val postDelay = 15
+        const val postDelay = 5
         var lastTime = currentTimeMillis()
     }
 
     init {
         viewModelScope.launch {
             realtime.subscribe("collections.$PATH_COLLECTION_ID.documents") {
-                val path = it.cast<RoomDrawPath>()
+                val path = it.cast<RoomSyncPath>()
                 if (roomId != path.roomId) {
                     return@subscribe
                 }
@@ -44,7 +44,7 @@ class RoomViewModel(
         }
     }
 
-    fun createPathDocument(segment: DrawPath) {
+    fun createPathDocument(segment: SyncPath) {
         val currentTime = currentTimeMillis()
         if (currentTime - lastTime < postDelay) {
             return
@@ -53,12 +53,11 @@ class RoomViewModel(
         viewModelScope.launch {
             db.createDocument(
                 PATH_COLLECTION_ID,
-                RoomDrawPath(roomId, segment).toJson(),
+                RoomSyncPath(roomId, segment).toJson(),
                 listOf("*"),
                 listOf("*")
             )
         }
-
         lastTime = currentTime
     }
 }
