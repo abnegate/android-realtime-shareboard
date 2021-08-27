@@ -17,17 +17,31 @@
         android:background="@drawable/gradient_list"
         tools:context=".menu.MenuFragment">
 
-        <ImageView
-            android:id="@+id/logoImage"
-            android:layout_width="130dp"
-            android:layout_height="130dp"
-            android:layout_marginTop="64dp"
-            android:contentDescription="@string/cd_logoImage"
-            android:src="@mipmap/ic_launcher"
+        <TextView
+            android:id="@+id/nameText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="92dp"
+            android:letterSpacing="0.15"
+            android:padding="32dp"
+            android:text="@string/app_name"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            android:textSize="22sp"
             app:layout_constraintBottom_toTopOf="@id/roomNameField"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/bg_rect"
+            app:layout_constraintBottom_toBottomOf="@id/nameText"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/nameText"
+            app:layout_constraintWidth_percent="0.9" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/progress"
@@ -39,7 +53,7 @@
             app:layout_constraintBottom_toTopOf="@id/joinRoomButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/logoImage"
+            app:layout_constraintTop_toBottomOf="@id/nameText"
             app:showAnimationBehavior="inward"
             app:trackCornerRadius="3dp" />
 
@@ -58,12 +72,14 @@
             app:layout_constraintBottom_toTopOf="@id/roomPasswordField"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/logoImage"
+            app:layout_constraintTop_toBottomOf="@+id/nameText"
             app:layout_constraintWidth_percent="0.9">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:imeOptions="actionNext"
+                android:inputType="text"
                 android:text="@={viewModel.roomName}" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -85,6 +101,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:inputType="textPassword"
                 android:text="@={viewModel.password}" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -100,7 +118,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/roomPasswordField"
-            app:layout_constraintWidth_percent="0.75" />
+            app:layout_constraintWidth_percent="0.9" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/createRoomButton"
@@ -109,10 +127,31 @@
             android:layout_height="wrap_content"
             android:onClick="@{() -> viewModel.createRoom()}"
             android:text="@string/create_room"
+            android:textColor="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/joinRoomButton"
-            app:layout_constraintWidth_percent="0.75" />
+            app:layout_constraintWidth_percent="0.9" />
+
+        <TextView
+            android:id="@+id/builtWithText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/built_with"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toTopOf="@id/appwriteLogo"
+            app:layout_constraintStart_toStartOf="@id/appwriteLogo" />
+
+        <ImageView
+            android:id="@+id/appwriteLogo"
+            android:layout_width="150dp"
+            android:layout_height="30dp"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/ic_appwrite"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

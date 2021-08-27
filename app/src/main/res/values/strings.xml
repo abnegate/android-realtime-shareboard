@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RealBoardTime</string>
+    <string name="app_name">Real | Board | Time</string>
     <string name="menu">Menu</string>
     <string name="board">Board</string>
     <string name="join_room">Join Room</string>
@@ -20,4 +20,5 @@
     <string name="erase">Erase</string>
     <string name="pick_color">Pick A Color</string>
     <string name="cancel">cancel</string>
+    <string name="built_with">built with</string>
 </resources>

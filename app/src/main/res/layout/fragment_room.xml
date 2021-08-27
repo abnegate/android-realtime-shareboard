@@ -3,7 +3,7 @@
 
     <data>
 
-        <import type="io.appwrite.realboardtime.drawing.PenMode" />
+        <import type="io.appwrite.realboardtime.model.PenMode" />
 
         <variable
             name="viewModel"
