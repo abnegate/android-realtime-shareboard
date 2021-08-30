@@ -2,7 +2,6 @@ package io.appwrite.realboardtime.drawing
 
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -62,7 +61,6 @@ class DrawingFragment : Fragment() {
         }
 
         viewModel.paintColor.observe(viewLifecycleOwner) {
-            Log.e("SET_COLOR", it.toString())
             drawingBoard!!.paintColor = it
             colorButton!!.backgroundTintList = ColorStateList.valueOf(it)
         }
@@ -81,7 +79,7 @@ class DrawingFragment : Fragment() {
             DrawingMessage.CHANGE_COLOR -> {
                 ColorPickerDialog.Builder(requireActivity())
                     .setTitle(R.string.pick_color)
-                    .setColorSwatch(ColorSwatch.ALL)
+                    .setColorSwatch(ColorSwatch._500)
                     .setColorListener { color, _ ->
                         viewModel.setPaintColor(color)
                     }
