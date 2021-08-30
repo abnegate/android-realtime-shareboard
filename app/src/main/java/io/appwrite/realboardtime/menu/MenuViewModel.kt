@@ -30,7 +30,11 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
 
     init {
         viewModelScope.launch {
-            account.createSession("jake@appwrite.io", "password")
+            try {
+                account.createAnonymousSession()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
