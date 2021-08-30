@@ -1,13 +1,13 @@
 package io.appwrite.realboardtime.room
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import io.appwrite.Client
 import io.appwrite.extensions.toJson
+import io.appwrite.models.RealtimeSubscription
 import io.appwrite.realboardtime.core.BaseViewModel
 import io.appwrite.realboardtime.core.PATH_COLLECTION_ID
-import io.appwrite.realboardtime.core.cast
+import io.appwrite.realboardtime.core.ROOM_COLLECTION_ID
+import io.appwrite.realboardtime.core.fromJson
 import io.appwrite.realboardtime.model.RoomSyncPath
 import io.appwrite.realboardtime.model.SyncPath
 import io.appwrite.services.Database
@@ -18,7 +18,9 @@ import java.lang.System.currentTimeMillis
 class RoomViewModel(
     private val client: Client,
     private val roomId: String
-) : BaseViewModel<RoomMessage>() {
+) : BaseViewModel<RoomMessage>(), LifecycleObserver {
+
+    private lateinit var subscription: RealtimeSubscription
 
     private val _incomingSegments = MutableLiveData<SyncPath>()
     val incomingSegments: LiveData<SyncPath> = _incomingSegments
@@ -34,12 +36,14 @@ class RoomViewModel(
 
     init {
         viewModelScope.launch {
-            realtime.subscribe("collections.$PATH_COLLECTION_ID.documents") {
-                val path = it.cast<RoomSyncPath>()
-                if (roomId != path.roomId) {
+            subscription = realtime.subscribe(
+                "collections.$PATH_COLLECTION_ID.documents",
+                payloadType = RoomSyncPath::class.java
+            ) {
+                if (roomId != it.payload.roomId) {
                     return@subscribe
                 }
-                _incomingSegments.postValue(path)
+                _incomingSegments.postValue(it.payload!!)
             }
         }
     }
@@ -59,5 +63,23 @@ class RoomViewModel(
             )
         }
         lastTime = currentTime
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun closeSocket() {
+        subscription.close()
+
+        viewModelScope.launch {
+            val room = db.getDocument(ROOM_COLLECTION_ID, roomId)
+                .body
+                ?.string()
+                ?.fromJson<Room>()
+
+            db.updateDocument(
+                ROOM_COLLECTION_ID,
+                roomId,
+                mapOf("participants" to --room!!.participants)
+            )
+        }
     }
 }

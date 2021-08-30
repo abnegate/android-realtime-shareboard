@@ -54,6 +54,8 @@ class RoomFragment : Fragment() {
             }
         }
 
+        lifecycle.addObserver(viewModel)
+
         childFragmentManager.beginTransaction()
             .add(R.id.fragmentContainer, fragment)
             .commit()

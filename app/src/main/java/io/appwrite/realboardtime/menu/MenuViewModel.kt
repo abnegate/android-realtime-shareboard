@@ -14,7 +14,6 @@ import io.appwrite.services.Account
 import io.appwrite.services.Database
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.lang.System.currentTimeMillis
 
 class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
 
@@ -58,6 +57,11 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
                 setBusy(false)
                 return@launch
             }
+            db.updateDocument(
+                ROOM_COLLECTION_ID,
+                room.id,
+                mapOf("participants" to ++room.participants)
+            )
             _room.postValue(room!!)
             setBusy(false)
         }
@@ -79,6 +83,7 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
             val pwHash = password.value.generateKeys()
             val roomDto = RoomDto(
                 roomName.value,
+                1,
                 pwHash.passwordHash,
                 pwHash.passwordSalt
             )
@@ -125,13 +130,11 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
             filters = listOf("name=${roomName.value}"),
             limit = 1
         )
-
-        val bodyString = response.body?.string()
-
-        return bodyString
+        return response.body
+            ?.string()
             ?.fromJson<Filter>()
             ?.documents
             ?.firstOrNull()
-            ?.cast()
+            ?.cast<Room>()
     }
 }
