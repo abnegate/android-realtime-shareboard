@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import io.appwrite.services.KeepAliveService
 import kotlinx.coroutines.delay
 import kotlin.collections.component1
 import kotlin.collections.component2

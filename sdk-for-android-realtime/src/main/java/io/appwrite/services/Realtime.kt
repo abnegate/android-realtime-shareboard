@@ -1,16 +1,17 @@
 package io.appwrite.services
 
 import io.appwrite.Client
+import io.appwrite.exceptions.AppwriteException
 import io.appwrite.extensions.forEachAsync
 import io.appwrite.extensions.fromJson
-import io.appwrite.extensions.toJson
-import io.appwrite.models.RealtimeCodes
-import io.appwrite.models.RealtimeError
-import io.appwrite.models.RealtimeMessage
-import io.appwrite.models.RealtimeSubscription
+import io.appwrite.extensions.jsonCast
+import io.appwrite.models.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import okhttp3.*
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.ws.RealWebSocket
 import java.util.*
@@ -24,11 +25,14 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
         get() = Dispatchers.Main + job
 
     private companion object {
+        private const val TYPE_ERROR = "error"
+        private const val TYPE_EVENT = "event"
+
         private const val DEBOUNCE_MILLIS = 1L
 
         private var socket: RealWebSocket? = null
-        private var channelCallbacks = mutableMapOf<String, MutableCollection<(Map<*,*>) -> Unit>>()
-        private var errorCallbacks = mutableSetOf<(RealtimeError) -> Unit>()
+        private var channelCallbacks = mutableMapOf<String, MutableCollection<RealtimeCallback>>()
+        private var errorCallbacks = mutableSetOf<(AppwriteException) -> Unit>()
 
         private var subCallDepth = 0
     }
@@ -60,23 +64,40 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
             minimumDeflateSize = client.http.minWebSocketMessageToCompress
         )
 
-        socket?.connect(client.http)
+        socket!!.connect(client.http)
     }
 
     private fun closeSocket() {
-        socket?.close(RealtimeCodes.POLICY_VIOLATION.value, null)
+        socket?.close(RealtimeCode.POLICY_VIOLATION.value, null)
     }
 
     fun subscribe(
         vararg channels: String,
-        callback: (Any) -> Unit
+        callback: (RealtimeResponseEvent<Any>) -> Unit,
+    ) = subscribe(
+        channels = channels,
+        Any::class.java,
+        callback
+    )
+
+    fun <T> subscribe(
+        vararg channels: String,
+        payloadType: Class<T>,
+        callback: (RealtimeResponseEvent<T>) -> Unit,
     ): RealtimeSubscription {
         channels.forEach {
             if (!channelCallbacks.containsKey(it)) {
-                channelCallbacks[it] = mutableListOf(callback)
+                channelCallbacks[it] = mutableListOf(
+                    RealtimeCallback(
+                        payloadType,
+                        callback as (RealtimeResponseEvent<*>) -> Unit
+                    )
+                )
                 return@forEach
             }
-            channelCallbacks[it]?.add(callback)
+            channelCallbacks[it]?.add(
+                RealtimeCallback(payloadType, callback as (RealtimeResponseEvent<*>) -> Unit)
+            )
         }
 
         launch {
@@ -101,7 +122,7 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
         }
     }
 
-    fun doOnError(callback: (RealtimeError) -> Unit) {
+    fun doOnError(callback: (AppwriteException) -> Unit) {
         errorCallbacks.add(callback)
     }
 
@@ -109,35 +130,36 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             super.onMessage(webSocket, text)
-            print("WebSocket message received: $text")
 
             launch(IO) {
-                val message = parse<RealtimeMessage>(text)
-                if (message?.channels == null) {
-                    val error = parse<RealtimeError>(text) ?: return@launch
-                    errorCallbacks.forEach {
-                        it.invoke(error)
-                    }
-                    return@launch
+                val message = text.fromJson<RealtimeResponse>()
+                when (message.type) {
+                    TYPE_ERROR -> handleResponseError(message)
+                    TYPE_EVENT -> handleResponseEvent(message)
                 }
+            }
+        }
 
-                message.channels.forEachAsync { channel ->
-                    channelCallbacks[channel]?.forEachAsync { callback ->
-                        callback.invoke(
-                            message.payload.toJson().fromJson(Map::class.java)
-                        )
-                    }
+        private fun handleResponseError(message: RealtimeResponse) {
+            val error = message.data.jsonCast<AppwriteException>()
+            errorCallbacks.forEach { it.invoke(error) }
+        }
+
+        private suspend fun handleResponseEvent(message: RealtimeResponse) {
+            val event = message.data.jsonCast<RealtimeResponseEvent<Any>>()
+            event.channels.forEachAsync { channel ->
+                channelCallbacks[channel]?.forEachAsync { callbackWrapper ->
+                    event.payload = event.payload.jsonCast(callbackWrapper.payloadClass)
+                    callbackWrapper.callback.invoke(event)
                 }
             }
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             super.onClosing(webSocket, code, reason)
-            print("WebSocket closing with code $code because: $reason.")
-            if (code == RealtimeCodes.POLICY_VIOLATION.value) {
+            if (code == RealtimeCode.POLICY_VIOLATION.value) {
                 return
             }
-            print("Reconnecting in 1 second.")
             launch {
                 delay(1000)
                 createSocket()
@@ -146,15 +168,7 @@ class Realtime(client: Client) : Service(client), CoroutineScope {
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             super.onFailure(webSocket, t, response)
-            print("WebSocket failure.")
             t.printStackTrace()
-        }
-
-        private inline fun <reified T> parse(text: String): T? = try {
-            text.fromJson(T::class.java)
-        } catch (ex: Exception) {
-            ex.printStackTrace()
-            null
         }
     }
 }

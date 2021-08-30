@@ -6,7 +6,6 @@ import com.google.gson.Gson
 import io.appwrite.appwrite.BuildConfig
 import io.appwrite.exceptions.AppwriteException
 import io.appwrite.extensions.fromJson
-import io.appwrite.models.Error
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -363,9 +362,9 @@ class Client @JvmOverloads constructor(
 
                     val contentType: String = response.headers["content-type"] ?: ""
                     val error = if (contentType.contains("application/json", ignoreCase = true)) {
-                        bodyString.fromJson(Error::class.java)
+                        bodyString.fromJson<AppwriteException>()
                     } else {
-                        Error(bodyString, response.code)
+                        AppwriteException(bodyString, response.code)
                     }
 
                     it.cancel(AppwriteException(
