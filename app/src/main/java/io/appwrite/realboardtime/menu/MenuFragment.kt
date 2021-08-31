@@ -16,6 +16,7 @@ import com.google.android.material.snackbar.Snackbar
 import io.appwrite.Client
 import io.appwrite.realboardtime.R
 import io.appwrite.realboardtime.core.ClientViewModelFactory
+import io.appwrite.realboardtime.core.ENDPOINT
 import io.appwrite.realboardtime.core.PROJECT_ID
 import io.appwrite.realboardtime.core.hideSoftKeyBoard
 import io.appwrite.realboardtime.databinding.FragmentMenuBinding
@@ -27,7 +28,7 @@ class MenuFragment : Fragment() {
     private val viewModel by viewModels<MenuViewModel> {
         ClientViewModelFactory(
             Client(requireContext())
-                .setEndpoint("https://realtime.appwrite.org/v1")
+                .setEndpoint(ENDPOINT)
                 .setProject(PROJECT_ID)
         )
     }

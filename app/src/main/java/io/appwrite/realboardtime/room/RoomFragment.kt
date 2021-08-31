@@ -1,5 +1,6 @@
 package io.appwrite.realboardtime.room
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,7 @@ import io.appwrite.realboardtime.core.ClientViewModelFactory
 import io.appwrite.realboardtime.core.PROJECT_ID
 import io.appwrite.realboardtime.databinding.FragmentRoomBinding
 import io.appwrite.realboardtime.drawing.DrawingFragment
+import io.appwrite.realboardtime.room.ParticipantLeaveWatcherService.Companion.ROOM_ID_EXTRA
 
 class RoomFragment : Fragment() {
 
@@ -45,6 +47,11 @@ class RoomFragment : Fragment() {
 
         val view = binding.root
 
+        val intent = Intent(requireContext(), ParticipantLeaveWatcherService::class.java).apply {
+            putExtra(ROOM_ID_EXTRA, args.roomId)
+        }
+        requireActivity().startService(intent)
+
         val fragment = DrawingFragment.newInstance(onProducePathSegment = {
             viewModel.createPathDocument(it)
         }).apply {
@@ -53,8 +60,6 @@ class RoomFragment : Fragment() {
                 consumePathSegment(it)
             }
         }
-
-        lifecycle.addObserver(viewModel)
 
         childFragmentManager.beginTransaction()
             .add(R.id.fragmentContainer, fragment)

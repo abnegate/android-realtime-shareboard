@@ -18,7 +18,7 @@ import java.lang.System.currentTimeMillis
 class RoomViewModel(
     private val client: Client,
     private val roomId: String
-) : BaseViewModel<RoomMessage>(), LifecycleObserver {
+) : BaseViewModel<RoomMessage>() {
 
     private lateinit var subscription: RealtimeSubscription
 
@@ -63,23 +63,5 @@ class RoomViewModel(
             )
         }
         lastTime = currentTime
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun closeSocket() {
-        subscription.close()
-
-        viewModelScope.launch {
-            val room = db.getDocument(ROOM_COLLECTION_ID, roomId)
-                .body
-                ?.string()
-                ?.fromJson<Room>()
-
-            db.updateDocument(
-                ROOM_COLLECTION_ID,
-                roomId,
-                mapOf("participants" to --room!!.participants)
-            )
-        }
     }
 }
