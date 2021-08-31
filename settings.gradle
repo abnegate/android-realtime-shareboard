@@ -3,7 +3,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+        }
     }
 }
 rootProject.name = "RealBoardTime"
-include ':app', ':sdk-for-android-realtime'
+include ':app'
