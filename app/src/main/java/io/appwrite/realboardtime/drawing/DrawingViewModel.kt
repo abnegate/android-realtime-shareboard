@@ -21,8 +21,4 @@ class DrawingViewModel : BaseViewModel<DrawingMessage>() {
     fun setStrokeWidth(value: Int) {
         strokeWidth.postValue(value)
     }
-
-    fun postMessage(message: DrawingMessage) {
-        this.message.postValue(message)
-    }
 }

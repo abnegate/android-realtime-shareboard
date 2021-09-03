@@ -5,10 +5,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import io.appwrite.Client
 import io.appwrite.realboardtime.R
@@ -16,6 +18,7 @@ import io.appwrite.realboardtime.core.ClientViewModelFactory
 import io.appwrite.realboardtime.core.PROJECT_ID
 import io.appwrite.realboardtime.databinding.FragmentRoomBinding
 import io.appwrite.realboardtime.drawing.DrawingFragment
+import io.appwrite.realboardtime.drawing.DrawingMessage
 import io.appwrite.realboardtime.room.ParticipantLeaveWatcherService.Companion.ROOM_ID_EXTRA
 
 class RoomFragment : Fragment() {
@@ -47,10 +50,16 @@ class RoomFragment : Fragment() {
 
         val view = binding.root
 
-        val intent = Intent(requireContext(), ParticipantLeaveWatcherService::class.java).apply {
-            putExtra(ROOM_ID_EXTRA, args.roomId)
+        requireActivity().startService(
+            Intent(requireContext(), ParticipantLeaveWatcherService::class.java).apply {
+                putExtra(ROOM_ID_EXTRA, args.roomId)
+            }
+        )
+
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(this) {
+            handleMessage(RoomMessage.GO_BACK)
         }
-        requireActivity().startService(intent)
+        callback.isEnabled = true
 
         val fragment = DrawingFragment.newInstance(onProducePathSegment = {
             viewModel.createPathDocument(it)
@@ -65,19 +74,17 @@ class RoomFragment : Fragment() {
             .add(R.id.fragmentContainer, fragment)
             .commit()
 
-        viewModel.message.observe(viewLifecycleOwner, ::showMessage)
+        viewModel.message.observe(viewLifecycleOwner, ::handleMessage)
 
         return view
     }
 
-    private fun showMessage(message: RoomMessage?) {
-        val builder = AlertDialog.Builder(requireContext())
+    private fun handleMessage(message: RoomMessage?) {
         when (message!!) {
-
+            RoomMessage.GO_BACK -> {
+                parentFragment?.findNavController()
+                    ?.popBackStack(R.id.menuFragment, false)
+            }
         }
-        builder.setNeutralButton(R.string.ok) { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.create().show()
     }
 }

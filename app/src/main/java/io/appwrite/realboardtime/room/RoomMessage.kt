@@ -1,3 +1,5 @@
 package io.appwrite.realboardtime.room
 
-enum class RoomMessage
+enum class RoomMessage {
+    GO_BACK
+}

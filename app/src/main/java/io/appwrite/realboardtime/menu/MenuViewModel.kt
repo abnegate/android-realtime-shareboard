@@ -46,14 +46,14 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
             }
             val room = tryGetRoom()
             if (room == null) {
-                message.postValue(MenuMessage.ROOM_INVALID_CREDENTIALS)
+                postMessage(MenuMessage.ROOM_INVALID_CREDENTIALS)
                 setBusy(false)
                 return@launch
             }
             val decodedSalt = Base64.decode(room.passwordSalt, Base64.DEFAULT)
             val decodedLocalHash = password.value.generateKeys(decodedSalt).passwordHash
             if (decodedLocalHash != room.passwordHash) {
-                message.postValue(MenuMessage.ROOM_INVALID_CREDENTIALS)
+                postMessage(MenuMessage.ROOM_INVALID_CREDENTIALS)
                 setBusy(false)
                 return@launch
             }
@@ -76,7 +76,7 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
             }
             var room = tryGetRoom()
             if (room != null) {
-                message.postValue(MenuMessage.ROOM_EXISTS)
+                postMessage(MenuMessage.ROOM_EXISTS)
                 setBusy(false)
                 return@launch
             }
@@ -95,7 +95,7 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
             )
             room = response.body?.string()?.fromJson<Room>()
             if (room == null) {
-                message.postValue(MenuMessage.ROOM_CREATE_FAILED)
+                postMessage(MenuMessage.ROOM_CREATE_FAILED)
                 setBusy(false)
                 return@launch
             }
@@ -106,11 +106,11 @@ class MenuViewModel(private val client: Client) : BaseViewModel<MenuMessage>() {
 
     private fun validateInputs(): Boolean {
         if (!isValidRoomName()) {
-            message.postValue(MenuMessage.ROOM_NAME_INVALID)
+            postMessage(MenuMessage.ROOM_NAME_INVALID)
             return false
         }
         if (!isValidPassword()) {
-            message.postValue(MenuMessage.ROOM_PASSWORD_INVALID)
+            postMessage(MenuMessage.ROOM_PASSWORD_INVALID)
             return false
         }
         return true

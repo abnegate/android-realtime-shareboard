@@ -1,15 +1,22 @@
 package io.appwrite.realboardtime.core
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 abstract class BaseViewModel<TMessageType> : ViewModel() {
 
-    val message = MutableLiveData<TMessageType>()
+    private val _message = MutableLiveData<TMessageType>()
+    val message: LiveData<TMessageType> = _message
 
-    val isBusy = MutableLiveData<Boolean>()
+    private val _isBusy = MutableLiveData<Boolean>()
+    val isBusy: LiveData<Boolean> = _isBusy
 
-    protected fun setBusy(busy: Boolean) {
-        isBusy.postValue(busy)
+    fun setBusy(busy: Boolean) {
+        _isBusy.postValue(busy)
+    }
+
+    fun postMessage(msg: TMessageType) {
+        _message.postValue(msg!!)
     }
 }

@@ -5,10 +5,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.ImageView
+import androidx.activity.addCallback
 import androidx.core.os.bundleOf
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.appwrite.realboardtime.R
 import io.appwrite.realboardtime.colorpicker.ColorPickerDialog
@@ -16,6 +21,7 @@ import io.appwrite.realboardtime.colorpicker.ColorSwatch
 import io.appwrite.realboardtime.databinding.FragmentDrawingBinding
 import io.appwrite.realboardtime.model.SyncPath
 import java.io.Serializable
+
 
 class DrawingFragment : Fragment() {
 
@@ -35,6 +41,9 @@ class DrawingFragment : Fragment() {
     private val viewModel by viewModels<DrawingViewModel>()
     private var drawingBoard: DrawingView? = null
     private var colorButton: FloatingActionButton? = null
+    private var logoImage: ImageView? = null
+
+    private lateinit var bounceAnimation: Animation
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,17 +64,22 @@ class DrawingFragment : Fragment() {
         val view = binding.root
 
         colorButton = view.findViewById(R.id.colorFab)
+        logoImage = view.findViewById(R.id.appwriteLogo)
         drawingBoard = view.findViewById(R.id.viewDraw)
         drawingBoard?.setOnProducePathSegmentListener {
             onProduce.invoke(it)
         }
 
+        bounceAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.bounce)
+
         viewModel.paintColor.observe(viewLifecycleOwner) {
             drawingBoard!!.paintColor = it
             colorButton!!.backgroundTintList = ColorStateList.valueOf(it)
+            logoImage!!.imageTintList = ColorStateList.valueOf(it)
+            logoImage!!.startAnimation(bounceAnimation)
         }
 
-        viewModel.message.observe(viewLifecycleOwner, ::showMessage)
+        viewModel.message.observe(viewLifecycleOwner, ::handleMessage)
 
         return view
     }
@@ -74,7 +88,7 @@ class DrawingFragment : Fragment() {
         drawingBoard?.drawLine(path)
     }
 
-    private fun showMessage(message: DrawingMessage?) {
+    private fun handleMessage(message: DrawingMessage?) {
         when (message!!) {
             DrawingMessage.CHANGE_COLOR -> {
                 ColorPickerDialog.Builder(requireActivity())
